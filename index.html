@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="mg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lalao Molosse 3D</title>
+  
+  <!-- LOGO SY FAVICON -->
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  
+  <!-- MANIFEST HO AN'NY APP PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#080a10">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: #080a10;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 10px;
+      overflow-x: hidden;
+    }
+
+    .splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle at center, #151a28 0%, #080a10 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .splash-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-title {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #f1c40f;
+      text-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
+      margin-bottom: 30px;
+      letter-spacing: 2px;
+      text-align: center;
+    }
+
+    /* 3D CUBE CONTAINER */
+    .cube-container {
+      width: 100px;
+      height: 100px;
+      perspective: 400px;
+      margin-bottom: 40px;
+      cursor: pointer;
+    }
+
+    .cube-3d {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: rotateIntroCube 8s infinite linear;
+    }
+
+    @keyframes rotateIntroCube {
+      0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+      100% { transform: rotateX(360deg) rotateY(720deg) rotateZ(360deg); }
+    }
+
+    .cube-face {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background: rgba(30, 96, 255, 0.85);
+      border: 3px solid #00e5ff;
+      border-radius: 12px;
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 0 15px rgba(0, 229, 255, 0.4);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 10px;
+      align-items: center;
+      justify-items: center;
+    }
+
+    .cube-dot {
+      width: 16px;
+      height: 16px;
+      background-color: #ff3333;
+      border-radius: 50%;
+      box-shadow: 0 0 5px #fff;
+    }
+
+    .cf-front  { transform: rotateY(0deg) translateZ(50px); }
+    .cf-back   { transform: rotateY(180deg) translateZ(50px); }
+    .cf-right  { transform: rotateY(90deg) translateZ(50px); }
+    .cf-left   { transform: rotateY(-90deg) translateZ(50px); }
+    .cf-top    { transform: rotateX(90deg) translateZ(50px); }
+    .cf-bottom { transform: rotateX(-90deg) translateZ(50px); }
+
+    .btn-start-game {
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: 800;
+      padding: 15px 40px;
+      border: none;
+      border-radius: 50px;
+      box-shadow: 0 8px 25px rgba(46, 204, 113, 0.4);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-start-game:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 30px rgba(46, 204, 113, 0.6);
+    }
+
+    .game-area {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .main-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #f1c40f;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .table-wrapper {
+      position: relative;
+      width: 100%;
+      padding: 20px 5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .poker-table {
+      position: relative;
+      width: 100%;
+      height: 390px;
+      background: radial-gradient(ellipse at center, #184c7a 0%, #0d2e4a 100%);
+      border-radius: 140px;
+      border: 9px solid #d4a359;
+      outline: 7px solid #1a1a1a;
+      box-shadow: inset 0 0 25px rgba(0,0,0,0.8), 0 8px 25px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .croupier-badge {
+      position: absolute;
+      top: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #27ae60;
+      border: 2px solid #2ecc71;
+      color: #fff;
+      font-weight: bold;
+      border-radius: 12px;
+      padding: 4px 14px;
+      font-size: 0.75rem;
+      z-index: 10;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+
+    .dice-red-box {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #c0392b;
+      border: 2px solid #e74c3c;
+      border-radius: 10px;
+      padding: 5px 14px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      z-index: 6;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 0 6px rgba(0,0,0,0.3);
+    }
+
+    .mini-dice {
+      width: 28px;
+      height: 28px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .mini-dice.rolling {
+      animation: miniRoll 0.4s infinite linear;
+    }
+
+    @keyframes miniRoll {
+      0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+      100% { transform: rotateX(360deg) rotateY(720deg) rotateZ(360deg); }
+    }
+
+    .m-face {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 3px;
+      align-items: center;
+      justify-items: center;
+      box-shadow: inset 0 0 3px rgba(0,0,0,0.2);
+    }
+
+    .blue-dice .m-face {
+      background-color: #1e60ff !important;
+      border-color: #0040d0 !important;
+    }
+    .blue-dice .m-dot {
+      background-color: #ff3333 !important;
+      box-shadow: 0 0 2px #fff;
+    }
+
+    .white-dice .m-face {
+      background-color: #ffffff;
+    }
+    .white-dice .m-dot {
+      background-color: #2c3e50;
+    }
+
+    .m-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    .mf-1 { transform: rotateY(0deg) translateZ(14px); }
+    .mf-2 { transform: rotateY(180deg) translateZ(14px); }
+    .mf-3 { transform: rotateY(90deg) translateZ(14px); }
+    .mf-4 { transform: rotateY(-90deg) translateZ(14px); }
+    .mf-5 { transform: rotateX(90deg) translateZ(14px); }
+    .mf-6 { transform: rotateX(-90deg) translateZ(14px); }
+
+    .show-1 { transform: rotateX(0deg) rotateY(0deg); }
+    .show-2 { transform: rotateX(0deg) rotateY(-180deg); }
+    .show-3 { transform: rotateX(0deg) rotateY(-90deg); }
+    .show-4 { transform: rotateX(0deg) rotateY(90deg); }
+    .show-5 { transform: rotateX(-90deg) rotateY(0deg); }
+    .show-6 { transform: rotateX(90deg) rotateY(0deg); }
+
+    .badge {
+      position: absolute;
+      background: #0b1f33;
+      border: 1.5px solid #00d2d3;
+      border-radius: 8px;
+      padding: 3px 8px;
+      text-align: center;
+      font-size: 0.65rem;
+      z-index: 10;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+      white-space: nowrap;
+    }
+
+    .badge strong {
+      display: block;
+      color: #00d2d3;
+      font-size: 0.65rem;
+    }
+
+    .badge .val {
+      color: #2ecc71;
+      font-weight: bold;
+    }
+
+    .j4-badge { bottom: -14px; left: 12%; }
+    .j1-badge { bottom: -14px; left: 50%; transform: translateX(-50%); }
+    .j5-badge { bottom: -14px; right: 12%; }
+
+    .j2-badge { top: 35%; right: -25px; }
+    .j6-badge { bottom: 20%; right: -25px; }
+
+    .j3-badge { top: 35%; left: -25px; }
+    .j7-badge { bottom: 20%; left: -25px; }
+
+    .outer-board-layout {
+      margin-top: 35px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      z-index: 5;
+    }
+
+    .row-blue-top, .row-blue-bottom {
+      display: flex;
+      gap: 6px;
+    }
+
+    .blue-cell {
+      background-color: #0f3860;
+      border: 1.5px solid #00d2d3;
+      border-radius: 6px;
+      color: #00e5ff;
+      font-weight: 800;
+      font-size: 0.9rem;
+      width: 72px;
+      height: 38px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .blue-cell .multiplier-tag {
+      font-size: 0.55rem;
+      color: #f1c40f;
+    }
+
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 6px;
+      background-color: #0d47a1;
+      padding: 6px;
+      border-radius: 8px;
+      width: 228px;
+      height: 140px;
+    }
+
+    .board-card {
+      background-color: #ffffff;
+      border: 2px solid transparent;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .board-card:active, .blue-cell:active {
+      transform: scale(0.95);
+    }
+
+    .has-bet {
+      background-color: #fffde7 !important;
+      border-color: #f1c40f !important;
+      box-shadow: inset 0 0 8px rgba(241, 196, 15, 0.5);
+    }
+    .has-bet .card-num, .has-bet span { color: #b7950b !important; }
+
+    .status-win {
+      background-color: #e0f7fa !important;
+      border-color: #00e5ff !important;
+      box-shadow: 0 0 12px #00e5ff, inset 0 0 10px #00b8d4;
+    }
+    .status-win .card-num, .status-win span { color: #00838f !important; }
+
+    .status-lose {
+      background-color: #ffebee !important;
+      border-color: #ff1744 !important;
+      box-shadow: 0 0 10px rgba(255, 23, 68, 0.6);
+    }
+    .status-lose .card-num, .status-lose span { color: #c62828 !important; }
+
+    .card-num {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #000;
+      line-height: 1;
+    }
+
+    .card-chip {
+      position: absolute;
+      bottom: 2px;
+      font-size: 0.55rem;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 6px;
+      display: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      z-index: 8;
+    }
+
+    .chip-yellow { background: #f39c12; color: #fff; }
+    .chip-cyan { background: #00b8d4; color: #fff; }
+    .chip-red { background: #d32f2f; color: #fff; }
+
+    .result-text {
+      margin-top: 15px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      min-height: 25px;
+      text-align: center;
+    }
+
+    .result-text .gain { color: #00e5ff; }
+    .result-text .loss { color: #ff5252; }
+
+    .actions-row {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    .btn-aodina {
+      flex: 3;
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+    }
+
+    .btn-aodina:hover { background: #27ae60; }
+
+    .btn-cancel {
+      flex: 1;
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+    }
+
+    .btn-cancel:hover { background: #c0392b; }
+  </style>
+</head>
+<body>
+
+  <div class="splash-screen" id="splashScreen">
+    <div class="splash-title">LALAO MOLOSSE 3D</div>
+    
+    <div class="cube-container" onclick="startGame()">
+      <div class="cube-3d">
+        <div class="cube-face cf-front">
+          <div></div><div></div><div></div><div></div><div class="cube-dot"></div><div></div><div></div><div></div><div></div>
+        </div>
+        <div class="cube-face cf-back">
+          <div class="cube-dot"></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div class="cube-dot"></div>
+        </div>
+        <div class="cube-face cf-right">
+          <div class="cube-dot"></div><div></div><div></div><div></div><div class="cube-dot"></div><div></div><div></div><div></div><div class="cube-dot"></div>
+        </div>
+        <div class="cube-face cf-left">
+          <div class="cube-dot"></div><div></div><div class="cube-dot"></div><div></div><div></div><div></div><div class="cube-dot"></div><div></div><div class="cube-dot"></div>
+        </div>
+        <div class="cube-face cf-top">
+          <div class="cube-dot"></div><div></div><div class="cube-dot"></div><div></div><div class="cube-dot"></div><div></div><div class="cube-dot"></div><div></div><div class="cube-dot"></div>
+        </div>
+        <div class="cube-face cf-bottom">
+          <div class="cube-dot"></div><div></div><div class="cube-dot"></div><div class="cube-dot"></div><div></div><div class="cube-dot"></div><div class="cube-dot"></div><div></div><div class="cube-dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-start-game" onclick="startGame()">HILALAO 🎲</button>
+  </div>
+
+  <div class="game-area">
+    
+    <div class="main-title">LALAO MOLOSSE 🎲</div>
+
+    <div class="table-wrapper">
+      <div class="poker-table">
+
+        <div class="croupier-badge">🎲 Croupier</div>
+
+        <div class="dice-red-box">
+          <div class="mini-dice blue-dice show-1" id="dice-1">
+            <div class="m-face mf-1"><div></div><div></div><div></div><div></div><div class="m-dot"></div><div></div><div></div><div></div><div></div></div>
+            <div class="m-face mf-2"><div class="m-dot"></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div class="m-dot"></div></div>
+            <div class="m-face mf-3"><div class="m-dot"></div><div></div><div></div><div></div><div class="m-dot"></div><div></div><div></div><div></div><div class="m-dot"></div></div>
+            <div class="m-face mf-4"><div class="m-dot"></div><div></div><div class="m-dot"></div><div></div><div></div><div></div><div class="m-dot"></div><div></div><div class="m-dot"></div></div>
+            <div class="m-face mf-5"><div class="m-dot"></div><div></div><div class="m-dot"></div><div></div><div class="m-dot"></div><div></div><div class="m-dot"></div><div></div><div class="m-dot"></div></div>
+            <div class="m-face mf-6"><div class="m-dot"></div><div></div><div class="m-dot"></div><div class="m-dot"></div><div></div><div class="m-dot"></div><div class="m-dot"></div><div></div><div class="m-dot"></div></div>
+          </div>
+
+          <div class="mini-dice white-dice show-1" id="dice-2">
+            <div class="m-face mf-1"><div></div><div></div><div></div><div></div><div class="m-dot"></div><div></div><div></div><div></div><div></div></div>
+            <div class="m-face mf-2"><div class="m-dot"></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div class="m-dot"></div></div>
+            <div class="m-face mf-3"><div class="m-dot"></div><div></div><div></div><div></div><div class="m-dot"></div><div></div><div></div><div></div><div class="m-dot"></div></div>
+            <div class="m-face mf-4"><div class="m-dot"></div><div></div><div class="m-dot"></div><div></div><div></div><div></div><div class="m-dot"></div><div></div><div class="m-dot"></div></div>
+            <div class="m-face mf-5"><div class="m-dot"></div><div></div><div class="m-dot"></div><div></div><div class="m-dot"></div><div></div><div class="m-dot"></div><div></div><div class="m-dot"></div></div>
+            <div class="m-face mf-6"><div class="m-dot"></div><div></div><div class="m-dot"></div><div class="m-dot"></div><div></div><div class="m-dot"></div><div class="m-dot"></div><div></div><div class="m-dot"></div></div>
+          </div>
+
+          <div class="mini-dice white-dice show-1" id="dice-3">
+            <div class="m-face mf-1"><div></div><div></div><div></div><div></div><div class="m-dot"></div><div></div><div></div><div></div><div></div></div>
+            <div class="m-face mf-2"><div class="m-dot"></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div class="m-dot"></div></div>
+            <div class="m-face mf-3"><div class="m-dot"></div><div></div><div></div><div></div><div class="m-dot"></div><div></div><div></div><div></div><div class="m-dot"></div></div>
+            <div class="m-face mf-4"><div class="m-dot"></div><div></div><div class="m-dot"></div><div></div><div></div><div></div><div class="m-dot"></div><div></div><div class="m-dot"></div></div>
+            <div class="m-face mf-5"><div class="m-dot"></div><div></div><div class="m-dot"></div><div></div><div class="m-dot"></div><div></div><div class="m-dot"></div><div></div><div class="m-dot"></div></div>
+            <div class="m-face mf-6"><div class="m-dot"></div><div></div><div class="m-dot"></div><div class="m-dot"></div><div></div><div class="m-dot"></div><div class="m-dot"></div><div></div><div class="m-dot"></div></div>
+          </div>
+        </div>
+
+        <div class="outer-board-layout">
+          
+          <div class="row-blue-top">
+            <div class="blue-cell" id="bcard-1" onclick="addBet('b1', 1)">
+              <span>1</span><span class="multiplier-tag">×7</span>
+              <span class="card-chip" id="bchip-1">0 Ar</span>
+            </div>
+            <div class="blue-cell" id="bcard-2" onclick="addBet('b2', 2)">
+              <span>2</span><span class="multiplier-tag">×7</span>
+              <span class="card-chip" id="bchip-2">0 Ar</span>
+            </div>
+            <div class="blue-cell" id="bcard-3" onclick="addBet('b3', 3)">
+              <span>3</span><span class="multiplier-tag">×7</span>
+              <span class="card-chip" id="bchip-3">0 Ar</span>
+            </div>
+          </div>
+
+          <div class="board-grid">
+            <div class="board-card" id="card-1" onclick="addBet('main', 1)">
+              <span class="card-num">1</span>
+              <span class="card-chip" id="chip-1">0 Ar</span>
+            </div>
+            <div class="board-card" id="card-2" onclick="addBet('main', 2)">
+              <span class="card-num">2</span>
+              <span class="card-chip" id="chip-2">0 Ar</span>
+            </div>
+            <div class="board-card" id="card-3" onclick="addBet('main', 3)">
+              <span class="card-num">3</span>
+              <span class="card-chip" id="chip-3">0 Ar</span>
+            </div>
+            <div class="board-card" id="card-4" onclick="addBet('main', 4)">
+              <span class="card-num">4</span>
+              <span class="card-chip" id="chip-4">0 Ar</span>
+            </div>
+            <div class="board-card" id="card-5" onclick="addBet('main', 5)">
+              <span class="card-num">5</span>
+              <span class="card-chip" id="chip-5">0 Ar</span>
+            </div>
+            <div class="board-card" id="card-6" onclick="addBet('main', 6)">
+              <span class="card-num">6</span>
+              <span class="card-chip" id="chip-6">0 Ar</span>
+            </div>
+          </div>
+
+          <div class="row-blue-bottom">
+            <div class="blue-cell" id="bcard-4" onclick="addBet('b4', 4)">
+              <span>4</span><span class="multiplier-tag">×7</span>
+              <span class="card-chip" id="bchip-4">0 Ar</span>
+            </div>
+            <div class="blue-cell" id="bcard-5" onclick="addBet('b5', 5)">
+              <span>5</span><span class="multiplier-tag">×7</span>
+              <span class="card-chip" id="bchip-5">0 Ar</span>
+            </div>
+            <div class="blue-cell" id="bcard-6" onclick="addBet('b6', 6)">
+              <span>6</span><span class="multiplier-tag">×7</span>
+              <span class="card-chip" id="bchip-6">0 Ar</span>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="badge j4-badge">
+          <strong>Joueur 4</strong>
+          <span class="val">1000 Ar</span>
+        </div>
+        <div class="badge j1-badge">
+          <strong>Joueur 1 (You)</strong>
+          <span class="val" id="user-balance-val">1000 Ar</span>
+        </div>
+        <div class="badge j5-badge">
+          <strong>Joueur 5</strong>
+          <span class="val">1000 Ar</span>
+        </div>
+
+        <div class="badge j2-badge">
+          <strong>Joueur 2</strong>
+          <span class="val">1000 Ar</span>
+        </div>
+        <div class="badge j6-badge">
+          <strong>Joueur 6</strong>
+          <span class="val">1000 Ar</span>
+        </div>
+
+        <div class="badge j3-badge">
+          <strong>Joueur 3</strong>
+          <span class="val">1000 Ar</span>
+        </div>
+        <div class="badge j7-badge">
+          <strong>Joueur 7</strong>
+          <span class="val">1000 Ar</span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="result-text" id="result-display">
+      🎲 Kitiho ny laharana iray hametrahana 100 Ar
+    </div>
+
+    <div class="actions-row">
+      <button class="btn-aodina" id="play-btn" onclick="playGame()">
+        Aodina ny Dé! 🎲
+      </button>
+      <button class="btn-cancel" onclick="clearBets()">
+        X
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    let balance = 1000;
+    
+    let mainBets = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    
+    const blueMapping = {
+      'b1': { num: 1, bet: 0 },
+      'b2': { num: 2, bet: 0 },
+      'b3': { num: 3, bet: 0 },
+      'b4': { num: 4, bet: 0 },
+      'b5': { num: 5, bet: 0 },
+      'b6': { num: 6, bet: 0 }
+    };
+
+    let gameState = 'betting';
+
+    function startGame() {
+      const splash = document.getElementById('splashScreen');
+      splash.classList.add('hidden');
+    }
+
+    function updateUI() {
+      document.getElementById('user-balance-val').textContent = balance + " Ar";
+
+      if (gameState === 'betting') {
+        for (let i = 1; i <= 6; i++) {
+          const card = document.getElementById(`card-${i}`);
+          const chip = document.getElementById(`chip-${i}`);
+          card.className = 'board-card';
+          if (mainBets[i] > 0) {
+            card.classList.add('has-bet');
+            chip.textContent = mainBets[i] + " Ar";
+            chip.className = 'card-chip chip-yellow';
+            chip.style.display = "block";
+          } else {
+            chip.style.display = "none";
+          }
+        }
+
+        Object.keys(blueMapping).forEach((key, idx) => {
+          const bCard = document.getElementById(`bcard-${idx + 1}`);
+          const bChip = document.getElementById(`bchip-${idx + 1}`);
+          bCard.className = 'blue-cell';
+          if (blueMapping[key].bet > 0) {
+            bCard.classList.add('has-bet');
+            bChip.textContent = blueMapping[key].bet + " Ar";
+            bChip.className = 'card-chip chip-yellow';
+            bChip.style.display = "block";
+          } else {
+            bChip.style.display = "none";
+          }
+        });
+      }
+    }
+
+    function addBet(type, val) {
+      if (gameState === 'result') {
+        resetBoardStyles();
+        gameState = 'betting';
+      }
+
+      if (balance >= 100) {
+        balance -= 100;
+        if (type === 'main') {
+          mainBets[val] += 100;
+        } else {
+          blueMapping[type].bet += 100;
+        }
+        updateUI();
+      } else {
+        alert("Tsy ampy ny solde-nao!");
+      }
+    }
+
+    function clearBets() {
+      if (gameState === 'result') {
+        resetBoardStyles();
+        gameState = 'betting';
+      }
+      
+      for (let i = 1; i <= 6; i++) {
+        balance += mainBets[i];
+        mainBets[i] = 0;
+      }
+      Object.keys(blueMapping).forEach(key => {
+        balance += blueMapping[key].bet;
+        blueMapping[key].bet = 0;
+      });
+
+      updateUI();
+    }
+
+    function resetBoardStyles() {
+      for (let i = 1; i <= 6; i++) {
+        document.getElementById(`card-${i}`).className = 'board-card';
+        document.getElementById(`chip-${i}`).style.display = 'none';
+      }
+      Object.keys(blueMapping).forEach((key, idx) => {
+        document.getElementById(`bcard-${idx + 1}`).className = 'blue-cell';
+        document.getElementById(`bchip-${idx + 1}`).style.display = 'none';
+      });
+    }
+
+    function setDiceFace(diceEl, val) {
+      diceEl.className = 'mini-dice ' + (diceEl.id === 'dice-1' ? 'blue-dice ' : 'white-dice ') + 'show-' + val;
+    }
+
+    function playGame() {
+      const totalMainBet = Object.values(mainBets).reduce((a, b) => a + b, 0);
+      const totalBlueBet = Object.values(blueMapping).reduce((a, b) => a + b.bet, 0);
+      const totalBet = totalMainBet + totalBlueBet;
+
+      if (totalBet === 0) {
+        alert("Mametraha vola amin'ny laharana iray aloha!");
+        return;
+      }
+
+      const btn = document.getElementById('play-btn');
+      btn.disabled = true;
+
+      const d1El = document.getElementById('dice-1');
+      const d2El = document.getElementById('dice-2');
+      const d3El = document.getElementById('dice-3');
+
+      d1El.classList.add('rolling');
+      d2El.classList.add('rolling');
+      d3El.classList.add('rolling');
+
+      setTimeout(() => {
+        const d1 = Math.floor(Math.random() * 6) + 1;
+        const d2 = Math.floor(Math.random() * 6) + 1;
+        const d3 = Math.floor(Math.random() * 6) + 1;
+
+        d1El.classList.remove('rolling');
+        d2El.classList.remove('rolling');
+        d3El.classList.remove('rolling');
+
+        setDiceFace(d1El, d1);
+        setDiceFace(d2El, d2);
+        setDiceFace(d3El, d3);
+
+        const rolled = [d1, d2, d3];
+        let winAmount = 0;
+        gameState = 'result';
+
+        for (let i = 1; i <= 6; i++) {
+          const card = document.getElementById(`card-${i}`);
+          const chip = document.getElementById(`chip-${i}`);
+          const matchCount = rolled.filter(val => val === i).length;
+
+          if (mainBets[i] > 0) {
+            if (matchCount > 0) {
+              let gainForThisCard = mainBets[i] * (matchCount + 1);
+              winAmount += gainForThisCard;
+
+              card.className = 'board-card status-win';
+              chip.className = 'card-chip chip-cyan';
+              chip.textContent = `+${gainForThisCard} Ar`;
+              chip.style.display = 'block';
+            } else {
+              card.className = 'board-card status-lose';
+              chip.className = 'card-chip chip-red';
+              chip.textContent = `-${mainBets[i]} Ar`;
+              chip.style.display = 'block';
+            }
+          }
+        }
+
+        Object.keys(blueMapping).forEach((key, idx) => {
+          const bCard = document.getElementById(`bcard-${idx + 1}`);
+          const bChip = document.getElementById(`bchip-${idx + 1}`);
+          const num = blueMapping[key].num;
+          const betVal = blueMapping[key].bet;
+
+          if (betVal > 0) {
+            if (d1 === num) {
+              let gainForBlue = betVal * 7;
+              winAmount += gainForBlue;
+
+              bCard.className = 'blue-cell status-win';
+              bChip.className = 'card-chip chip-cyan';
+              bChip.textContent = `+${gainForBlue} Ar`;
+              bChip.style.display = 'block';
+            } else {
+              bCard.className = 'blue-cell status-lose';
+              bChip.className = 'card-chip chip-red';
+              bChip.textContent = `-${betVal} Ar`;
+              bChip.style.display = 'block';
+            }
+          }
+        });
+
+        balance += winAmount;
+        document.getElementById('user-balance-val').textContent = balance + " Ar";
+
+        const resultEl = document.getElementById('result-display');
+        const netProfit = winAmount - totalBet;
+
+        if (netProfit > 0) {
+          resultEl.innerHTML = `🎲 Dé Manga: [${d1}] | Telo: [${d1}][${d2}][${d3}] — <span class="gain">🎉 Nahazo +${netProfit} Ar!</span>`;
+        } else if (netProfit === 0) {
+          resultEl.innerHTML = `🎲 Dé Manga: [${d1}] | Telo: [${d1}][${d2}][${d3}] — <span style="color:#f1c40f">⚖️ Mitovy (0 Ar)</span>`;
+        } else {
+          resultEl.innerHTML = `🎲 Dé Manga: [${d1}] | Telo: [${d1}][${d2}][${d3}] — <span class="loss">❌ Lasa ${Math.abs(netProfit)} Ar!</span>`;
+        }
+
+        mainBets = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+        Object.keys(blueMapping).forEach(key => blueMapping[key].bet = 0);
+        btn.disabled = false;
+      }, 1000);
+    }
+
+    updateUI();
+  </script>
+</body>
+</html>
