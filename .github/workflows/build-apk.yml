@@ -13,18 +13,19 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
 
-      - name: Build APK
+      - name: Initialize and Build APK
         run: |
-          npx @bubblewrap/cli init --manifest=https://desire41zed.github.io/lalao-molosse-3d/manifest.json
-          npx @bubblewrap/cli build
+          npx @bubblewrap/cli init --manifest=https://desire41zed.github.io/lalao-molosse-3d/manifest.json --directory=android-app
+          cd android-app
+          npx @bubblewrap/cli build --skipManifestValidation
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: ./*.apk
+          path: android-app/*.apk
